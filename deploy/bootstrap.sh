@@ -26,7 +26,12 @@ KEY=$HOME_DIR/.ssh/github_deploy
 GITHUB_FP=SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU
 
 [ "$(id -u)" = 0 ] || { echo "Run this as root on the VPS." >&2; exit 1; }
-( : </dev/tty ) 2>/dev/null || { echo "Needs a terminal: run it with ssh -t." >&2; exit 1; }
+# ORANGIRAFFE_NONINTERACTIVE=1 runs without a terminal (for example from a CI
+# job): it needs the repo to be public, and leaves the inbox password for later.
+NONINTERACTIVE=${ORANGIRAFFE_NONINTERACTIVE:-0}
+if [ "$NONINTERACTIVE" != 1 ]; then
+  ( : </dev/tty ) 2>/dev/null || { echo "Needs a terminal: run it with ssh -t." >&2; exit 1; }
+fi
 as_p() { sudo -u "$P" -H "$@"; }
 
 echo "==> preflight"
@@ -75,6 +80,8 @@ echo "==> GitHub access"
 if as_p env GIT_TERMINAL_PROMPT=0 git ls-remote -q "$HTTPS_URL" main >/dev/null 2>&1; then
   REMOTE=$HTTPS_URL
   echo "    public repo, reading over HTTPS (no key needed)"
+elif [ "$NONINTERACTIVE" = 1 ]; then
+  echo "The repo is not public, and a deploy key needs a terminal. Stopping." >&2; exit 1
 else
   [ -f "$KEY" ] || as_p ssh-keygen -q -t ed25519 -N "" -C "orangiraffe VPS deploy (read-only)" -f "$KEY"
   SCAN=$(ssh-keyscan -t ed25519 github.com 2>/dev/null)
@@ -152,6 +159,9 @@ echo "    orangiraffe-form: $(docker ps --filter name=^orangiraffe-form$ --forma
 echo "==> inbox password"
 if grep -q '^INBOX_PASSWORD_HASH=.' "$ENVF"; then
   echo "    already set (change it any time: bash $HOME_DIR/deploy/set-inbox-password.sh)"
+elif [ "$NONINTERACTIVE" = 1 ]; then
+  echo "    not set yet. The form still saves messages; the inbox says 'not set up'."
+  echo "    Set it later from a terminal: bash $HOME_DIR/deploy/set-inbox-password.sh"
 else
   echo "    Choose the username and password for https://orangiraffe.com/inbox"
   bash "$HOME_DIR/deploy/set-inbox-password.sh"
