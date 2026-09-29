@@ -15,12 +15,14 @@ public/                  what the site serves
   assets/mark.svg        logo mark (also the SVG favicon)
   assets/dromotelo.png   Dromotelo app icon
   thanks.html, contact-error.html   where the contact form redirects
+  assets/inbox.js        inbox conveniences (select all, local times, confirm)
   favicon.png, apple-touch-icon.png, robots.txt, sitemap.xml
-form/contact.py          contact form handler (Python stdlib only), emails via SMTP
-nginx.conf               clean URLs, 404 page, forwards POST /api/contact to the form
+form/contact.py          contact form + private inbox (Python stdlib only, SQLite)
+nginx.conf               clean URLs, 404 page, forwards /api/contact and /inbox to the form
 docker-compose.prod.yml  orangiraffe-web (nginx) on the proxy network + orangiraffe-form
 deploy/orangiraffe.com.caddy   site block for the shared Caddy
 deploy/enable-site.sh    root: installs the site block once DNS is right, verifies, rolls back on harm
+deploy/set-inbox-password.sh   root: sets the inbox username and password
 ```
 
 The site deliberately shows no address, phone or email. People reach the
@@ -43,7 +45,8 @@ following the box's project layout:
 | Working tree | `/opt/orangiraffe` |
 | Bare repo | `/opt/orangiraffe.git` (push `main` to deploy) |
 | Containers | `orangiraffe-web`, `orangiraffe-form`, compose project `orangiraffe`, no host ports |
-| Secrets | `/opt/orangiraffe/.env` (SMTP only, mode 600, not in git) |
+| Secrets | `/opt/orangiraffe/.env` (inbox password hash, mode 600, not in git) |
+| Data | `/opt/orangiraffe/data/messages.db` (not in git) |
 | Caddy site | `/opt/caddy-sites/orangiraffe.com.caddy` |
 
 Why a container instead of a Caddy `file_server`: the shared Caddy only has
@@ -52,29 +55,30 @@ A 64 MB nginx container serves `public/` (bind-mounted read-only), and Caddy
 proxies to it by name. Since the content is bind-mounted, a deploy is live as
 soon as the hook checks out the new commit.
 
-## Contact form
+## Contact form and inbox
 
-`form/contact.py` accepts `POST /api/contact` (plain HTML form, no JavaScript),
-emails the message to `MAIL_TO` with the sender as Reply-To, then redirects to
-`/thanks` or `/contact-error`. Nothing is stored; logs record only
-sent/rejected/failed. Spam control: a hidden honeypot field, 5 submissions per
-IP per hour, 100 per day overall.
+`form/contact.py` (Python stdlib only, container `orangiraffe-form`):
 
-Settings live in `/opt/orangiraffe/.env`:
+- `POST /api/contact`: plain HTML form, no JavaScript. Saves the message to
+  SQLite at `/opt/orangiraffe/data/messages.db`, then redirects to `/thanks`
+  or `/contact-error`. No email service is involved.
+- `https://orangiraffe.com/inbox`: private list of messages behind HTTP Basic
+  auth, with select all, delete selected and delete all. Each sender's email
+  is a mailto link for replying.
+
+Spam control: a hidden honeypot field, 5 submissions per IP per hour, 100 per
+day overall, and at most 5000 stored messages. IP addresses are never stored.
+Ten failed inbox sign-ins from one IP lock it out for 15 minutes.
+
+Set or change the inbox username and password, as root on the VPS:
 
 ```
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USER=<Brevo SMTP login>
-SMTP_PASS=<an SMTP key created only for this site>
-MAIL_FROM=<a sender verified in Brevo>
-MAIL_TO=info@orangiraffe.com
+bash /opt/orangiraffe/deploy/set-inbox-password.sh
 ```
 
-After editing it, from `/opt/orangiraffe` run
-`docker compose -p orangiraffe -f docker-compose.prod.yml up -d --force-recreate form`,
-then `docker exec orangiraffe-form python3 /app/contact.py --test`.
-If the provider changes from Brevo, update the privacy policy, which names it.
+It stores only a PBKDF2 hash in `/opt/orangiraffe/.env` (mode 600, not in git).
+
+Backup is one file: `/opt/orangiraffe/data/messages.db`.
 
 ## Updating
 

@@ -1,6 +1,7 @@
 # orangiraffe.com. Caddy (shared, on the external `proxy` network) reaches only
-# `web`. `web` serves the static files and forwards POST /api/contact to `form`
-# over this project's own network. No host ports are published.
+# `web`. `web` serves the static files and forwards /api/contact and /inbox to
+# `form` over this project's own network. No host ports are published.
+# Messages live in ./data/messages.db (SQLite, not in git).
 # Content is bind-mounted, so a deploy (git checkout) is live immediately.
 services:
   web:
@@ -28,8 +29,11 @@ services:
     env_file: .env
     user: "65534:65534"
     read_only: true
+    tmpfs:
+      - /tmp:size=8m
     volumes:
       - ./form:/app:ro
+      - ./data:/data
     networks:
       - default
     mem_limit: 64m

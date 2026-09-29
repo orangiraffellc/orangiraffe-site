@@ -94,9 +94,10 @@ done
 W=$(curl -s -o /dev/null -m 10 -w '%{http_code} %{redirect_url}' --resolve www.orangiraffe.com:443:127.0.0.1 https://www.orangiraffe.com/privacy || true)
 P=$(code orangiraffe.com /privacy)
 L=$(code orangiraffe.com /legal)
-# Honeypot-filled submission: exercises Caddy -> nginx -> form without sending email.
+# Honeypot-filled submission: exercises Caddy -> nginx -> form without saving anything.
 F=$(curl -s -o /dev/null -m 15 -w '%{http_code} %{redirect_url}' --resolve orangiraffe.com:443:127.0.0.1 \
   -d 'website=selftest&name=selftest&email=selftest%40example.com&message=selftest' https://orangiraffe.com/api/contact || true)
+I=$(code orangiraffe.com /inbox)
 DROMO_AFTER=$(code dromotelo.com)
 
 echo
@@ -104,7 +105,8 @@ echo "    https://orangiraffe.com/          $c"
 echo "    https://orangiraffe.com/privacy   $P"
 echo "    https://orangiraffe.com/legal     $L"
 echo "    https://www.orangiraffe.com/...   $W"
-echo "    contact form (no email sent)      $F"
+echo "    contact form (test, not saved)    $F"
+echo "    inbox without password            $I (401 = locked, 503 = password not set yet)"
 echo "    https://dromotelo.com/            $DROMO_AFTER (before: $DROMO_BEFORE)"
 
 if [ "$DROMO_BEFORE" = 200 ] && [ "$DROMO_AFTER" != 200 ]; then
@@ -115,7 +117,8 @@ if [ "$DROMO_BEFORE" = 200 ] && [ "$DROMO_AFTER" != 200 ]; then
 fi
 
 if [ "$c" = 200 ] && [ "$P" = 200 ] && [ "$L" = 200 ] && [ "$W" = "301 https://orangiraffe.com/privacy" ] \
-   && [ "$F" = "303 https://orangiraffe.com/thanks" ]; then
+   && [ "$F" = "303 https://orangiraffe.com/thanks" ] \
+   && { [ "$I" = 401 ] || [ "$I" = 503 ]; }; then
   echo
   echo "ORANGIRAFFE.COM IS LIVE with a valid certificate. dromotelo.com: $DROMO_AFTER"
 else
