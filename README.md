@@ -23,6 +23,8 @@ docker-compose.prod.yml  orangiraffe-web (nginx) on the proxy network + orangira
 deploy/orangiraffe.com.caddy   site block for the shared Caddy
 deploy/enable-site.sh    root: installs the site block once DNS is right, verifies, rolls back on harm
 deploy/set-inbox-password.sh   root: sets the inbox username and password
+deploy/bootstrap.sh      root, once: project user, deploy key, first deploy, cron, Caddy
+deploy/pull-deploy.sh    cron: pulls main from GitHub and deploys when it changed
 ```
 
 The site deliberately shows no address, phone or email. People reach the
@@ -43,7 +45,8 @@ following the box's project layout:
 | --- | --- |
 | Unix user | `orangiraffe` |
 | Working tree | `/opt/orangiraffe` |
-| Bare repo | `/opt/orangiraffe.git` (push `main` to deploy) |
+| Source | GitHub `orangiraffellc/orangiraffe-site`, pulled every 2 minutes |
+| Bare repo | `/opt/orangiraffe.git` (deploy hook; fed by `pull-deploy.sh`) |
 | Containers | `orangiraffe-web`, `orangiraffe-form`, compose project `orangiraffe`, no host ports |
 | Secrets | `/opt/orangiraffe/.env` (inbox password hash, mode 600, not in git) |
 | Data | `/opt/orangiraffe/data/messages.db` (not in git) |
@@ -82,18 +85,25 @@ Backup is one file: `/opt/orangiraffe/data/messages.db`.
 
 ## Updating
 
+Push to `main` on GitHub (`orangiraffellc/orangiraffe-site`). The VPS checks
+every 2 minutes (cron, as the `orangiraffe` user, `deploy/pull-deploy.sh`),
+fetches `main` over a read-only deploy key, and pushes it into the local bare
+repo `/opt/orangiraffe.git`, whose `post-receive` hook runs `git checkout -f
+main` into `/opt/orangiraffe` and `docker compose -p orangiraffe -f
+docker-compose.prod.yml up -d`. Deploy history: `/opt/orangiraffe/deploy.log`.
+
+Nothing on GitHub can write to the server, and no server key is stored on
+GitHub: the server only reads.
+
+First-time setup is `deploy/bootstrap.sh`, run once as root with a terminal:
+
 ```
-git remote add vps ssh://orangiraffe@67.217.240.31/opt/orangiraffe.git
-git push vps main
+scp deploy/bootstrap.sh root@67.217.240.31:/root/
+ssh -t root@67.217.240.31 "bash /root/bootstrap.sh"
 ```
 
-The `post-receive` hook runs `git checkout -f main` into `/opt/orangiraffe` and
-`docker compose -p orangiraffe -f docker-compose.prod.yml up -d`. The
-`orangiraffe` user needs an SSH key in `/opt/orangiraffe/.ssh/authorized_keys`
-first (installed by root).
-
-If you change `deploy/orangiraffe.com.caddy`, deploy, then as root run
-`bash /opt/orangiraffe/deploy/enable-site.sh`. It copies the block to
+If you change `deploy/orangiraffe.com.caddy`, push, wait for the deploy, then as
+root run `bash /opt/orangiraffe/deploy/enable-site.sh`. It copies the block to
 `/opt/caddy-sites/orangiraffe.com.caddy`, validates, reloads (never restarts)
 Caddy, checks both sites, and rolls back if dromotelo.com stops answering.
 
