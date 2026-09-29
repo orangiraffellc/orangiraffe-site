@@ -11,7 +11,8 @@
   --band-text: #F5EFE8;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
+/* Dark mode follows the OS on larger screens only; phones always get light. */
+@media (prefers-color-scheme: dark) and (min-width: 641px) {
   :root:not([data-theme="light"]) {
     --bg: #171415;
     --surface: #221E1F;
