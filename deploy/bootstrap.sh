@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# One-time setup of orangiraffe.com on the shared VPS. Run as root, with a terminal:
+# One-time setup of orangiraffe.com on the shared VPS. Run as root, with a terminal.
+# Public repo, from any root console (including the IONOS browser console):
+#   git clone https://github.com/orangiraffellc/orangiraffe-site /root/og && bash /root/og/deploy/bootstrap.sh
+# Private repo, over SSH:
 #   ssh -t root@67.217.240.31 "bash /root/bootstrap.sh"
 #
 # Creates the isolated 'orangiraffe' project (user, /opt/orangiraffe, bare repo
-# with deploy hook), gives it a read-only GitHub deploy key, deploys main from
+# with deploy hook), reads the repo over HTTPS if public or through a read-only
+# deploy key if private, deploys main from
 # github.com/orangiraffellc/orangiraffe-site, keeps pulling it every 2 minutes,
 # asks for the inbox password, then enables orangiraffe.com in the shared Caddy
 # only if DNS already points here. Touches no other project. Safe to re-run.
@@ -16,6 +20,7 @@ BARE=/opt/$P.git
 ENVF=$HOME_DIR/.env
 REPO=orangiraffellc/orangiraffe-site
 REMOTE=git@github.com:$REPO.git
+HTTPS_URL=https://github.com/$REPO.git
 KEY=$HOME_DIR/.ssh/github_deploy
 # GitHub's published ed25519 host key fingerprint.
 GITHUB_FP=SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU
@@ -64,29 +69,33 @@ HOOK
 chmod +x "$BARE/hooks/post-receive"
 chown -R "$P:$P" "$BARE"
 
-echo "==> GitHub access (read-only deploy key)"
-[ -f "$KEY" ] || as_p ssh-keygen -q -t ed25519 -N "" -C "orangiraffe VPS deploy (read-only)" -f "$KEY"
-SCAN=$(ssh-keyscan -t ed25519 github.com 2>/dev/null)
-FP=$(printf '%s\n' "$SCAN" | ssh-keygen -lf - | awk '{print $2}')
-[ "$FP" = "$GITHUB_FP" ] || { echo "GitHub host key fingerprint mismatch ($FP). Stopping." >&2; exit 1; }
-printf '%s\n' "$SCAN" > "$HOME_DIR/.ssh/known_hosts"
-cat > "$HOME_DIR/.ssh/config" <<CFG
+echo "==> GitHub access"
+# A public repo is read over HTTPS with no key. A private one needs a
+# read-only deploy key, which the server generates and you add on GitHub.
+if as_p env GIT_TERMINAL_PROMPT=0 git ls-remote -q "$HTTPS_URL" main >/dev/null 2>&1; then
+  REMOTE=$HTTPS_URL
+  echo "    public repo, reading over HTTPS (no key needed)"
+else
+  [ -f "$KEY" ] || as_p ssh-keygen -q -t ed25519 -N "" -C "orangiraffe VPS deploy (read-only)" -f "$KEY"
+  SCAN=$(ssh-keyscan -t ed25519 github.com 2>/dev/null)
+  FP=$(printf '%s\n' "$SCAN" | ssh-keygen -lf - | awk '{print $2}')
+  [ "$FP" = "$GITHUB_FP" ] || { echo "GitHub host key fingerprint mismatch ($FP). Stopping." >&2; exit 1; }
+  printf '%s\n' "$SCAN" > "$HOME_DIR/.ssh/known_hosts"
+  cat > "$HOME_DIR/.ssh/config" <<CFG
 Host github.com
     User git
     IdentityFile $KEY
     IdentitiesOnly yes
     StrictHostKeyChecking yes
 CFG
-chown "$P:$P" "$HOME_DIR/.ssh/known_hosts" "$HOME_DIR/.ssh/config"
-chmod 600 "$HOME_DIR/.ssh/config"
-as_p git --git-dir="$BARE" remote get-url github >/dev/null 2>&1 \
-  || as_p git --git-dir="$BARE" remote add github "$REMOTE"
+  chown "$P:$P" "$HOME_DIR/.ssh/known_hosts" "$HOME_DIR/.ssh/config"
+  chmod 600 "$HOME_DIR/.ssh/config"
 
-TRIES=0
-until ERR=$(as_p git ls-remote -q "$REMOTE" main 2>&1 >/dev/null); do
-  TRIES=$((TRIES + 1))
-  [ "$TRIES" -gt 1 ] && echo "    Still no access. GitHub said: $(printf '%s' "$ERR" | tail -n 1)"
-  cat <<MSG
+  TRIES=0
+  until ERR=$(as_p git ls-remote -q "$REMOTE" main 2>&1 >/dev/null); do
+    TRIES=$((TRIES + 1))
+    [ "$TRIES" -gt 1 ] && echo "    Still no access. GitHub said: $(printf '%s' "$ERR" | tail -n 1)"
+    cat <<MSG
 
     The server needs read access to github.com/$REPO.
     1. Open https://github.com/$REPO/settings/keys/new
@@ -96,9 +105,15 @@ until ERR=$(as_p git ls-remote -q "$REMOTE" main 2>&1 >/dev/null); do
 $(cat "$KEY.pub")
 
 MSG
-  read -r -p "    Press Enter once the key is added (Ctrl+C to stop): " _ </dev/tty
-done
-echo "    GitHub access OK"
+    read -r -p "    Press Enter once the key is added (Ctrl+C to stop): " _ </dev/tty
+  done
+fi
+if as_p git --git-dir="$BARE" remote get-url github >/dev/null 2>&1; then
+  as_p git --git-dir="$BARE" remote set-url github "$REMOTE"
+else
+  as_p git --git-dir="$BARE" remote add github "$REMOTE"
+fi
+echo "    GitHub access OK ($REMOTE)"
 
 echo "==> deploy from GitHub"
 as_p git --git-dir="$BARE" fetch -q github '+refs/heads/main:refs/remotes/github/main'

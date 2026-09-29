@@ -4,6 +4,8 @@
 # repo, whose post-receive hook checks it out and restarts this project only.
 # GitHub is the source of truth: a force-push there is followed here.
 set -euo pipefail
+# Never wait for a password prompt (cron has no terminal).
+export GIT_TERMINAL_PROMPT=0
 BARE=/opt/orangiraffe.git
 LOG=/opt/orangiraffe/deploy.log
 

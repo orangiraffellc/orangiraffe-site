@@ -87,7 +87,8 @@ Backup is one file: `/opt/orangiraffe/data/messages.db`.
 
 Push to `main` on GitHub (`orangiraffellc/orangiraffe-site`). The VPS checks
 every 2 minutes (cron, as the `orangiraffe` user, `deploy/pull-deploy.sh`),
-fetches `main` over a read-only deploy key, and pushes it into the local bare
+fetches `main` (over HTTPS if the repo is public, else a read-only deploy
+key), and pushes it into the local bare
 repo `/opt/orangiraffe.git`, whose `post-receive` hook runs `git checkout -f
 main` into `/opt/orangiraffe` and `docker compose -p orangiraffe -f
 docker-compose.prod.yml up -d`. Deploy history: `/opt/orangiraffe/deploy.log`.
@@ -95,7 +96,16 @@ docker-compose.prod.yml up -d`. Deploy history: `/opt/orangiraffe/deploy.log`.
 Nothing on GitHub can write to the server, and no server key is stored on
 GitHub: the server only reads.
 
-First-time setup is `deploy/bootstrap.sh`, run once as root with a terminal:
+First-time setup is `deploy/bootstrap.sh`, run once as root with a terminal.
+If the repo is public, the server reads it over HTTPS with no key, and one line
+in any root console does everything:
+
+```
+git clone https://github.com/orangiraffellc/orangiraffe-site /root/og && bash /root/og/deploy/bootstrap.sh
+```
+
+If the repo is private, the script generates a read-only deploy key and asks
+you to add it on GitHub (so run it from a terminal you can copy from):
 
 ```
 scp deploy/bootstrap.sh root@67.217.240.31:/root/
