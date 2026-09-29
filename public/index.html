@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orangiraffe LLC</title>
+<meta name="description" content="Orangiraffe LLC is a Texas software company. We build and publish apps, starting with Dromotelo, a running training app.">
+<link rel="canonical" href="https://orangiraffe.com/">
+<link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#231F20">
+<meta property="og:title" content="Orangiraffe LLC">
+<meta property="og:description" content="A Texas software company. Makers of Dromotelo.">
+<meta property="og:url" content="https://orangiraffe.com/">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Orangiraffe home">
+      <img src="/assets/mark.svg" alt="" width="44" height="44">
+      <span class="wordmark">orangiraffe</span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="/" aria-current="page">Home</a></li>
+        <li><a href="/#apps">Apps</a></li>
+        <li><a href="/#contact">Contact</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+        <li><a href="/legal">Legal</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<div class="strip" aria-hidden="true"></div>
+
+<main id="main">
+  <div class="wrap">
+    <section class="hero" aria-labelledby="intro">
+      <div>
+        <h1 id="intro">Orangiraffe LLC</h1>
+        <p>Orangiraffe LLC is a Texas software company. We design, build and publish our own apps, starting with Dromotelo, a training app for runners.</p>
+      </div>
+      <img class="hero-mark" src="/assets/mark.svg" alt="" width="180" height="180">
+    </section>
+
+    <h2 id="apps">Our apps</h2>
+    <article class="card">
+      <img src="/assets/dromotelo.png" alt="Dromotelo app icon" width="72" height="72">
+      <div>
+        <h3>Dromotelo</h3>
+        <p>Turns a runner's goal time into a personalized training plan with exact paces, for the 5K, 10K, half marathon and marathon. Syncs with Garmin, Strava, COROS and Polar.</p>
+        <p class="note">Available on the web. An Android phone app and a Wear OS watch app are in testing.</p>
+        <a class="button" href="https://dromotelo.com">Visit dromotelo.com</a>
+      </div>
+    </article>
+
+    <h2 id="contact">Contact</h2>
+    <form class="contact-form" method="post" action="/api/contact">
+      <p class="form-intro">Send us a message and we will reply by email.</p>
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" autocomplete="name" maxlength="100" required>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+      </div>
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="6" maxlength="5000" required></textarea>
+      </div>
+      <div class="hp" aria-hidden="true">
+        <label for="website">Leave this field empty</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
+      <button class="button" type="submit">Send message</button>
+      <p class="form-note">We use what you send only to reply to you. See our <a href="/privacy">Privacy Policy</a>.</p>
+    </form>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>&copy; 2026 Orangiraffe LLC, a Texas limited liability company.</p>
+    <ul>
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/legal">Legal</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+  </div>
+</footer>
+</body>
+</html>

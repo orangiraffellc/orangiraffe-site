@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Orangiraffe">
+  <defs><clipPath id="d"><circle cx="256" cy="256" r="200"/></clipPath></defs>
+  <circle cx="256" cy="256" r="250" fill="#231F20"/>
+  <circle cx="256" cy="256" r="192" fill="#F7941D"/>
+  <path clip-path="url(#d)" fill="#231F20" d="M398 132C330 118 232 146 150 184L122 188L116 206L80 212L78 234L104 240C98 272 106 302 122 332L150 398C158 414 176 416 188 404C188 330 204 254 252 226C300 204 362 252 380 312L386 460L480 460L480 120Z"/>
+</svg>

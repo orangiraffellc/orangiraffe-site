@@ -1,0 +1,18 @@
+# /opt/caddy-sites/orangiraffe.com.caddy  (owned by the orangiraffe project)
+# Apply with: docker exec dromotelo-caddy caddy reload --config /etc/caddy/Caddyfile
+orangiraffe.com {
+    reverse_proxy orangiraffe-web:80
+    encode gzip
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+        -Server
+    }
+}
+
+www.orangiraffe.com {
+    redir https://orangiraffe.com{uri} permanent
+}

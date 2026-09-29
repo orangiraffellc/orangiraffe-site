@@ -1,0 +1,44 @@
+# orangiraffe.com. Caddy (shared, on the external `proxy` network) reaches only
+# `web`. `web` serves the static files and forwards POST /api/contact to `form`
+# over this project's own network. No host ports are published.
+# Content is bind-mounted, so a deploy (git checkout) is live immediately.
+services:
+  web:
+    image: nginx:alpine
+    container_name: orangiraffe-web
+    restart: unless-stopped
+    volumes:
+      - ./public:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - default
+      - proxy
+    mem_limit: 64m
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "2"
+
+  form:
+    image: python:3.12-alpine
+    container_name: orangiraffe-form
+    restart: unless-stopped
+    command: ["python3", "-u", "/app/contact.py"]
+    env_file: .env
+    user: "65534:65534"
+    read_only: true
+    volumes:
+      - ./form:/app:ro
+    networks:
+      - default
+    mem_limit: 64m
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "2"
+
+networks:
+  proxy:
+    external: true
