@@ -15,11 +15,15 @@ if [ -f "$LOG" ] && [ "$(stat -c %s "$LOG")" -gt 1000000 ]; then
 fi
 exec >>"$LOG" 2>&1
 
+# Health file for the hourly GitHub check. Never blocks a deploy.
+bash /opt/orangiraffe/deploy/health-status.sh || echo "$(date -u +%FT%TZ) health-status failed"
+
 exec 9>"$BARE/pull.lock"
 flock -n 9 || exit 0
 
 git --git-dir="$BARE" fetch -q github '+refs/heads/main:refs/remotes/github/main' \
   || { echo "$(date -u +%FT%TZ) fetch from GitHub failed"; exit 1; }
+touch /opt/orangiraffe/.last-fetch
 new=$(git --git-dir="$BARE" rev-parse -q --verify refs/remotes/github/main) || exit 0
 cur=$(git --git-dir="$BARE" rev-parse -q --verify refs/heads/main || true)
 [ "$new" = "$cur" ] && exit 0

@@ -1,0 +1,105 @@
+name: Server check
+
+# Hourly check of the shared VPS from outside it. A failed run is the alert:
+# GitHub emails a failed scheduled run to whoever last changed the schedule
+# below. Reads only public URLs; needs no secrets.
+#
+# public/status.txt is written every 2 minutes on the server by
+# deploy/health-status.sh (called from pull-deploy.sh).
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_alert:
+        description: "Fail on purpose, to test that the alert email arrives"
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: server-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITES: "https://dromotelo.com https://orangiraffe.com"
+      STATUS_URL: https://orangiraffe.com/status.txt
+      DISK_MAX_PCT: "80"
+      MEM_MAX_PCT: "90"
+      # status.txt is rewritten every 2 minutes; older means the server's
+      # cron (and so auto-deploy) stopped.
+      STATUS_MAX_AGE_MIN: "20"
+      # The server fetches from GitHub every 2 minutes; older means deploys
+      # from GitHub are not reaching it.
+      FETCH_MAX_AGE_MIN: "60"
+      TEST_ALERT: ${{ inputs.test_alert || false }}
+    steps:
+      - name: Check sites, disk, memory and auto-deploy
+        run: |
+          set -uo pipefail
+          problems=()
+          fail() { problems+=("$1"); echo "::error::$1"; }
+
+          for url in $SITES; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+                     --retry 2 --retry-delay 15 "$url" || true)
+            echo "$url -> $code"
+            [ "$code" = "200" ] || fail "$url returned ${code:-no answer}"
+          done
+
+          status=$(curl -fsS --max-time 20 --retry 2 --retry-delay 15 "$STATUS_URL" || true)
+          if [ -z "$status" ]; then
+            fail "Could not read $STATUS_URL"
+          else
+            echo "$status"
+            val() { printf '%s\n' "$status" | sed -n "s/^$1=//p" | head -n 1; }
+            now=$(date +%s)
+            updated=$(val updated); disk=$(val disk_used_pct); mem=$(val mem_used_pct)
+            load=$(val load1); fetch=$(val last_fetch)
+            num() { [[ "$1" =~ ^[0-9]+$ ]]; }
+            if num "$updated"; then
+              age=$(( (now - updated) / 60 ))
+              [ "$age" -le "$STATUS_MAX_AGE_MIN" ] \
+                || fail "Server status is $age minutes old: the server's cron job has stopped (auto-deploy too)"
+            else
+              fail "status.txt has no valid 'updated' value"
+            fi
+            if num "$disk"; then
+              [ "$disk" -lt "$DISK_MAX_PCT" ] || fail "Disk is ${disk}% full (alert at ${DISK_MAX_PCT}%)"
+            else
+              fail "status.txt has no valid disk value"
+            fi
+            if num "$mem"; then
+              [ "$mem" -lt "$MEM_MAX_PCT" ] || fail "Memory is ${mem}% used (alert at ${MEM_MAX_PCT}%)"
+            else
+              fail "status.txt has no valid memory value"
+            fi
+            if num "$fetch"; then
+              fage=$(( (now - fetch) / 60 ))
+              [ "$fage" -le "$FETCH_MAX_AGE_MIN" ] \
+                || fail "Server last reached GitHub $fage minutes ago: pushes to orangiraffe-site are not deploying"
+            fi
+            {
+              echo "| Check | Value |"
+              echo "| --- | --- |"
+              echo "| Disk used | ${disk:-?}% |"
+              echo "| Memory used | ${mem:-?}% |"
+              echo "| Load (1 min) | ${load:-?} |"
+              echo "| Status age | ${age:-?} min |"
+              echo "| Last GitHub fetch | ${fage:-?} min ago |"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          [ "$TEST_ALERT" = "true" ] && fail "Test alert (run by hand with test_alert on). Everything else above is real."
+
+          if [ "${#problems[@]}" -gt 0 ]; then
+            { echo; echo "**Problems:**"; printf -- '- %s\n' "${problems[@]}"; } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "All good." | tee -a "$GITHUB_STEP_SUMMARY"

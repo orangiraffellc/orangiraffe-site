@@ -26,6 +26,8 @@ deploy/enable-site.sh    root: installs the site block once DNS is right, verifi
 deploy/set-inbox-password.sh   root: sets the inbox username and password
 deploy/bootstrap.sh      root, once: project user, deploy key, first deploy, cron, Caddy
 deploy/pull-deploy.sh    cron: pulls main from GitHub and deploys when it changed
+deploy/health-status.sh  cron (via pull-deploy): writes public/status.txt for the server check
+.github/workflows/server-check.yml   hourly outside check of the whole VPS, emails on failure
 ```
 
 The site deliberately shows no address, phone or email. People reach the
@@ -122,6 +124,28 @@ If you change `deploy/orangiraffe.com.caddy`, push, wait for the deploy, then as
 root run `bash /opt/orangiraffe/deploy/enable-site.sh`. It copies the block to
 `/opt/caddy-sites/orangiraffe.com.caddy`, validates, reloads (never restarts)
 Caddy, checks both sites, and rolls back if dromotelo.com stops answering.
+
+## Server check (alerts)
+
+IONOS alarms can only see CPU from outside the VM, not disk space or memory.
+So every 2 minutes `pull-deploy.sh` runs `deploy/health-status.sh`, which
+writes `https://orangiraffe.com/status.txt` (disk %, memory %, load, time of
+the last GitHub fetch). Every hour the GitHub workflow **Server check** reads
+it and fails when:
+
+- dromotelo.com or orangiraffe.com does not return 200,
+- disk is 80% full or more, or memory 90% used or more,
+- status.txt is over 20 minutes old (the server's cron, and auto-deploy, stopped),
+- the server has not reached GitHub for an hour (pushes are not deploying).
+
+A failed scheduled run is emailed by GitHub to whoever last changed the
+workflow's `cron` line (Settings > Notifications > Actions must allow email).
+Thresholds and the list of sites are the `env` values at the top of the
+workflow. To test the email, run it from the Actions tab with "test_alert" on.
+
+GitHub pauses scheduled workflows in a public repo after 60 days without a
+commit; it emails a warning first, and one click in the Actions tab resumes it.
+The check is free on a public repo.
 
 ## Preview locally
 

@@ -2,3 +2,6 @@
 __pycache__/
 data/
 deploy.log
+.last-fetch
+public/status.txt
+public/status.txt.tmp
