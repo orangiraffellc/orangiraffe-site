@@ -26,4 +26,11 @@ cur=$(git --git-dir="$BARE" rev-parse -q --verify refs/heads/main || true)
 
 echo "$(date -u +%FT%TZ) deploying ${new:0:7} (was ${cur:0:7})"
 git --git-dir="$BARE" push -q -f "$BARE" refs/remotes/github/main:refs/heads/main
+
+# The form service loads its code at start, and compose only recreates a
+# container when its config changes, so restart it when form/ changed.
+if [ -z "$cur" ] || ! git --git-dir="$BARE" diff --quiet "$cur" "$new" -- form/; then
+  (cd /opt/orangiraffe && docker compose -p orangiraffe -f docker-compose.prod.yml restart form)
+  echo "$(date -u +%FT%TZ) restarted form (form/ changed)"
+fi
 echo "$(date -u +%FT%TZ) deployed ${new:0:7}"
