@@ -17,6 +17,9 @@ Environment (from /opt/orangiraffe/.env, written by deploy/set-inbox-password.sh
   DB_PATH               default /data/messages.db
 
   python3 contact.py --hash-password   reads a password on stdin, prints its hash
+
+Code changes take effect on deploy: deploy/pull-deploy.sh restarts this
+service whenever form/ changes.
 """
 import base64
 import hashlib
