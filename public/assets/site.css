@@ -1,37 +1,35 @@
 :root {
+  /* Brand palette (Orangiraffe color sheet): #231F20 black, #4D4D4F dark gray,
+     #DCDDDE light gray, #F7941E orange. White is the page. */
   --ink: #231F20;
-  --orange: #F7941D;
-  --bg: #FFFBF5;
+  --orange: #F7941E;
+  --bg: #FFFFFF;
   --surface: #FFFFFF;
   --text: #231F20;
-  --muted: #5A5350;
-  --link: #9A4A00;
-  --border: #EADFD2;
-  --band: #231F20;
-  --band-text: #F5EFE8;
+  --muted: #4D4D4F;
+  --link: #231F20;
+  --border: #DCDDDE;
   color-scheme: light;
 }
 /* Dark mode follows the OS on larger screens only; phones always get light. */
 @media (prefers-color-scheme: dark) and (min-width: 641px) {
   :root:not([data-theme="light"]) {
-    --bg: #171415;
-    --surface: #221E1F;
-    --text: #F5EFE8;
-    --muted: #C2B8AF;
-    --link: #FFB255;
-    --border: #3A3334;
-    --band: #0F0D0D;
+    --bg: #231F20;
+    --surface: #4D4D4F;
+    --text: #FFFFFF;
+    --muted: #DCDDDE;
+    --link: #F7941E;
+    --border: #4D4D4F;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #171415;
-  --surface: #221E1F;
-  --text: #F5EFE8;
-  --muted: #C2B8AF;
-  --link: #FFB255;
-  --border: #3A3334;
-  --band: #0F0D0D;
+  --bg: #231F20;
+  --surface: #4D4D4F;
+  --text: #FFFFFF;
+  --muted: #DCDDDE;
+  --link: #F7941E;
+  --border: #4D4D4F;
   color-scheme: dark;
 }
 
@@ -45,8 +43,8 @@ body {
   overflow-wrap: break-word;
 }
 img, svg { max-width: 100%; height: auto; display: block; }
-a { color: var(--link); text-underline-offset: 2px; }
-a:hover { text-decoration-thickness: 2px; }
+a { color: var(--link); text-decoration-color: var(--orange); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 3px; }
 :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; border-radius: 4px; }
 
 .wrap { width: 100%; max-width: 960px; margin: 0 auto; padding: 0 16px; }
@@ -57,22 +55,18 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .skip:focus { left: 8px; top: 8px; z-index: 10; }
 
-/* Header band, black like the logo ring */
-.site-header { background: var(--band); color: var(--band-text); }
+/* Header: white in every mode, so the logo's black outline shows as designed */
+.site-header { background: #FFFFFF; color: #231F20; border-bottom: 1px solid #DCDDDE; }
 .site-header .wrap {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 8px 24px; padding-top: 14px; padding-bottom: 14px;
 }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.brand img { width: 44px; height: 44px; }
-.wordmark {
-  color: var(--orange); font-weight: 900; font-size: 28px; line-height: 1;
-  letter-spacing: -0.02em;
-}
+.brand { display: flex; align-items: center; text-decoration: none; }
+.brand img { height: 44px; width: auto; }
 .site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
-.site-nav a { color: var(--band-text); text-decoration: none; font-weight: 600; font-size: 15px; padding: 6px 0; display: inline-block; }
-.site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--orange); }
-.site-nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
+.site-nav a { color: #231F20; text-decoration: none; font-weight: 600; font-size: 15px; padding: 6px 0; display: inline-block; }
+.site-nav a:hover { color: #4D4D4F; }
+.site-nav a[aria-current="page"] { text-decoration: underline; text-decoration-color: #F7941E; text-underline-offset: 6px; text-decoration-thickness: 3px; }
 
 /* Orange accent strip under the header */
 .strip { height: 6px; background: var(--orange); }
@@ -104,7 +98,7 @@ h3 { font-size: 19px; margin: 32px 0 8px; }
   display: inline-block; background: var(--orange); color: var(--ink); font-weight: 700;
   text-decoration: none; padding: 10px 18px; border-radius: 999px;
 }
-.button:hover { background: #FFA43A; }
+.button:hover { background: #231F20; color: #F7941E; }
 @media (max-width: 480px) {
   .card { grid-template-columns: 1fr; }
 }
@@ -167,3 +161,9 @@ h3 { font-size: 19px; margin: 32px 0 8px; }
 .msg-meta strong { color: var(--text); }
 .msg-text { margin: 0; white-space: pre-wrap; }
 .inbox-empty { color: var(--muted); }
+
+/* Dark mode: a light-gray ring keeps the logo's black outer ring visible. */
+@media (prefers-color-scheme: dark) and (min-width: 641px) {
+  :root:not([data-theme="light"]) .hero-mark { background: #DCDDDE; border-radius: 50%; padding: 5px; }
+}
+:root[data-theme="dark"] .hero-mark { background: #DCDDDE; border-radius: 50%; padding: 5px; }

@@ -12,7 +12,8 @@ public/                  what the site serves
   legal.html             company details and website terms
   404.html
   assets/site.css        all styles, light and dark mode
-  assets/mark.svg        logo mark (also the SVG favicon)
+  assets/logo.png        horizontal logo (header), from the original Illustrator artwork
+  assets/mark.png        round icon (hero), from the original icon PNG
   assets/dromotelo.png   Dromotelo app icon
   thanks.html, contact-error.html   where the contact form redirects
   assets/inbox.js        inbox conveniences (select all, local times, confirm)
@@ -33,8 +34,13 @@ company through the contact form.
 Copy rules: no em dashes or en dashes (plain hyphens only), no emojis, and do not
 claim Play Store availability or integrations that are not live.
 
-`assets/mark.svg` is a vector redraw of the Orangiraffe roundel. Replace it with
-the original artwork when available (keep the file name).
+Logos come from the owner's originals in Google Drive: `Orangiraffe.pdf`
+(Illustrator vector; the horizontal lockup, rendered at 600 dpi with a transparent
+background) and `Orangiraffe Icon.png` (512 px). The favicons are resized from
+the icon. Brand colors, from `Orangiraffe_colors.pdf`: black #231F20, dark gray
+#4D4D4F, light gray #DCDDDE, orange #F7941E. The stylesheet uses only these plus
+white. Orange text on white fails contrast, so links are black with an orange
+underline.
 
 ## Hosting
 

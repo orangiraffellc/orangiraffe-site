@@ -180,16 +180,15 @@ def inbox_page(rows, total):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Inbox | Orangiraffe LLC</title>
-<link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png">
 <link rel="stylesheet" href="/assets/site.css">
 <script src="/assets/inbox.js" defer></script>
 </head>
 <body>
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="/" aria-label="Orangiraffe home">
-      <img src="/assets/mark.svg" alt="" width="44" height="44">
-      <span class="wordmark">orangiraffe</span>
+    <a class="brand" href="/">
+      <img src="/assets/logo.png" alt="Orangiraffe" width="219" height="44">
     </a>
   </div>
 </header>
