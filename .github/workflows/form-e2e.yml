@@ -1,0 +1,29 @@
+name: Form test (temporary)
+on: workflow_dispatch
+permissions: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - run: |
+          curl -sS https://orangiraffe.com/ | grep -n 'contact.js\|pow_salt\|data-pow' || echo "NO SCRIPT IN LIVE PAGE"
+          curl -sS -o /dev/null -w 'contact.js %{http_code} %{content_type}\n' 'https://orangiraffe.com/assets/contact.js?v=1'
+          curl -sSI https://orangiraffe.com/ | grep -i 'content-security\|cache\|last-modified'
+          mkdir t && cd t && npm init -y >/dev/null && npm i playwright@1 >/dev/null 2>&1 && npx playwright install chromium >/dev/null 2>&1
+          cat > t.js <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch(); const p = await b.newPage();
+            p.on('console', m => console.log('console', m.type(), m.text()));
+            p.on('pageerror', e => console.log('pageerror', e.message));
+            p.on('request', r => r.method() === 'POST' && console.log('POST body', r.postData()));
+            await p.goto('https://orangiraffe.com/');
+            await p.fill('#name', 'Automated test'); await p.fill('#email', 'test@example.com');
+            await p.fill('#message', 'Automated test of the contact form. Safe to delete.');
+            await Promise.all([p.waitForNavigation({ timeout: 30000 }), p.click('button[type=submit]')]);
+            console.log('RESULT', p.url(), await p.textContent('h1'));
+            await b.close();
+          })();
+          JS
+          node t.js
