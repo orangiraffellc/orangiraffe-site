@@ -3,10 +3,17 @@
 
 Python standard library only. No email service is involved:
 
-  POST /api/contact   plain HTML form (no JavaScript). Saves the message to
-                      SQLite, then redirects to /thanks or /contact-error.
+  POST /api/contact   the home page form. Saves the message to SQLite, then
+                      redirects to /thanks or /contact-error.
   GET  /inbox         password-protected list of messages (HTTP Basic auth).
   POST /inbox         delete selected messages, or all of them.
+
+Spam control, in order: a per-IP rate limit, a hidden honeypot field, a
+proof of work solved by the visitor's browser (public/assets/contact.js) and
+checked here, a minimum time on the page, and no links. Anything that fails
+those after the rate limit is dropped while the sender is told it was sent,
+so bots learn nothing (a form with no proof of work at all gets the error
+page instead, in case it is a person on an old cached copy of the page). Only then does a message count toward the daily cap.
 
 Logs never contain what people send, and IP addresses are never stored: they
 are only counted in memory, for rate limiting.
@@ -47,15 +54,30 @@ MAX_STORED = 5000
 LOGIN_FAILS = 10          # per IP ...
 LOGIN_WINDOW = 15 * 60    # ... per 15 minutes
 PBKDF2_ITERATIONS = 300_000
+# Proof of work: SHA-256 of POW_PREFIX + salt + ":" + nonce must start with
+# POW_BITS zero bits (about 65,000 tries at 16, a second or two on a phone).
+# Keep in sync with data-pow-bits on the form in public/index.html.
+POW_BITS = 16
+POW_PREFIX = "orangiraffe-contact:"
+POW_KEEP = 30 * 86400     # remember used salts this long (blocks replays)
+MIN_SECONDS = 3           # minimum time between opening the page and sending
 
 EMAIL_RE = re.compile(r"^[^@\s<>,;:\"]+@[^@\s<>,;:\"]+\.[^@\s<>,;:\"]+$")
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+SALT_RE = re.compile(r"^[0-9a-f]{32}$")
+# Links: a scheme, www., BBCode or HTML links, or a domain followed by a path.
+# A bare "example.com" is allowed. Same rule in public/assets/contact.js.
+LINK_RE = re.compile(
+    r"https?://|www\.|\[url|<a\s|href\s*=|\b[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}/\S",
+    re.IGNORECASE,
+)
 
 _lock = threading.Lock()
 _by_ip = {}
 _today = []
 _fails = {}
 _verified = set()  # sha256 of Authorization headers that already passed
+_blocked = {"count": 0, "since": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())}
 
 
 # --- storage -----------------------------------------------------------------
@@ -70,6 +92,7 @@ def db():
         " email TEXT NOT NULL,"
         " message TEXT NOT NULL)"
     )
+    con.execute("CREATE TABLE IF NOT EXISTS pow_used (salt TEXT PRIMARY KEY, used_at REAL NOT NULL)")
     return con
 
 
@@ -105,23 +128,58 @@ def check_password(password, stored):
 
 # --- rate limits -------------------------------------------------------------
 
-def allowed(ip):
-    """Counts every form submission, valid or not, so a flood cannot probe for free."""
+def allowed_ip(ip):
+    """Counts every form submission from an IP, valid or not, so a flood cannot probe for free."""
     now = time.time()
     with _lock:
-        global _today
-        _today = [t for t in _today if now - t < 86400]
         recent = [t for t in _by_ip.get(ip, []) if now - t < 3600]
-        if len(recent) >= PER_IP_PER_HOUR or len(_today) >= PER_DAY:
+        if len(recent) >= PER_IP_PER_HOUR:
             _by_ip[ip] = recent
             return False
         recent.append(now)
         _by_ip[ip] = recent
-        _today.append(now)
         if len(_by_ip) > 5000:
             for k in [k for k, v in _by_ip.items() if not v or now - v[-1] > 3600]:
                 del _by_ip[k]
         return True
+
+
+def allowed_today():
+    """Daily cap, counted only for messages that passed the spam checks, so
+    bots cannot use it up and lock real people out."""
+    now = time.time()
+    with _lock:
+        global _today
+        _today = [t for t in _today if now - t < 86400]
+        if len(_today) >= PER_DAY:
+            return False
+        _today.append(now)
+        return True
+
+
+def pow_ok(salt, nonce):
+    if not SALT_RE.match(salt) or not nonce.isdigit() or len(nonce) > 12:
+        return False
+    digest = hashlib.sha256(f"{POW_PREFIX}{salt}:{nonce}".encode()).digest()
+    return int.from_bytes(digest, "big") >> (256 - POW_BITS) == 0
+
+
+def pow_fresh(salt):
+    """Records the salt; False if it was already used (a replayed solution)."""
+    now = time.time()
+    with dbtx() as con:
+        try:
+            con.execute("INSERT INTO pow_used (salt, used_at) VALUES (?, ?)", (salt, now))
+        except sqlite3.IntegrityError:
+            return False
+        con.execute("DELETE FROM pow_used WHERE used_at < ?", (now - POW_KEEP,))
+    return True
+
+
+def blocked(reason):
+    with _lock:
+        _blocked["count"] += 1
+    log(f"dropped: {reason}")
 
 
 def login_blocked(ip):
@@ -200,6 +258,7 @@ def inbox_page(rows, total):
   <div class="wrap">
     <h1 class="inbox-title">Inbox <span class="inbox-count">{total}</span></h1>
     {body}
+    <p class="form-note">Spam blocked since {_blocked["since"]}: {_blocked["count"]}</p>
   </div>
 </main>
 </body>
@@ -331,20 +390,56 @@ class Handler(BaseHTTPRequestHandler):
         def get(key, limit):
             return (fields.get(key) or [""])[0].strip()[:limit]
 
-        if not allowed(self.client_ip()):
+        if not allowed_ip(self.client_ip()):
             log("rejected: rate limit")
             self.redirect("/contact-error")
-            return
-        # Honeypot: a field people never see. Bots fill it; pretend it worked.
-        if get("website", 200):
-            log("dropped: honeypot")
-            self.redirect("/thanks")
             return
         name = CONTROL_RE.sub(" ", get("name", 100)).strip()
         email = CONTROL_RE.sub("", get("email", 254))
         message = CONTROL_RE.sub("", get("message", 5000).replace("\r\n", "\n"))
+        salt, nonce = get("pow_salt", 64).lower(), get("pow_nonce", 20)
+        try:
+            elapsed = int(get("elapsed", 12) or 0) / 1000
+        except ValueError:
+            elapsed = 0
+        # Spam checks. People never fail these through the page (contact.js
+        # solves the proof of work and catches links first), so whatever
+        # fails is a bot: pretend it worked.
+        if get("website", 200):
+            reason = "honeypot"
+        elif not salt:
+            # No proof of work at all: a bot, or a person on a cached copy of
+            # the page from before contact.js. Say it failed, so a person
+            # reloads and tries again instead of losing the message.
+            blocked("no proof of work fields")
+            self.redirect("/contact-error")
+            return
+        elif not pow_ok(salt, nonce):
+            reason = "no proof of work"
+        elif elapsed < MIN_SECONDS:
+            reason = "too fast"
+        elif LINK_RE.search(name) or LINK_RE.search(message):
+            reason = "link"
+        else:
+            reason = ""
+        if not reason:
+            try:
+                if not pow_fresh(salt):
+                    reason = "replayed proof of work"
+            except sqlite3.Error as e:
+                log(f"failed: {type(e).__name__}")
+                self.redirect("/contact-error")
+                return
+        if reason:
+            blocked(reason)
+            self.redirect("/thanks")
+            return
         if not name or not EMAIL_RE.match(email) or len(message) < 2:
             log("rejected: invalid fields")
+            self.redirect("/contact-error")
+            return
+        if not allowed_today():
+            log("rejected: daily cap")
             self.redirect("/contact-error")
             return
         try:

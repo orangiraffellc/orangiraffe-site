@@ -14,6 +14,7 @@
 <meta property="og:url" content="https://orangiraffe.com/">
 <meta property="og:type" content="website">
 <link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/contact.js?v=1" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -57,7 +58,7 @@
     </article>
 
     <h2 id="contact">Contact</h2>
-    <form class="contact-form" method="post" action="/api/contact">
+    <form class="contact-form" method="post" action="/api/contact" data-pow-bits="16">
       <p class="form-intro">Send us a message and we will reply by email.</p>
       <div class="field">
         <label for="name">Name</label>
@@ -75,6 +76,11 @@
         <label for="website">Leave this field empty</label>
         <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
       </div>
+      <input type="hidden" name="pow_salt" value="">
+      <input type="hidden" name="pow_nonce" value="">
+      <input type="hidden" name="elapsed" value="">
+      <p class="form-error" role="alert" hidden></p>
+      <noscript><p class="form-error">The contact form needs JavaScript. Please turn it on to send a message.</p></noscript>
       <button class="button" type="submit">Send message</button>
       <p class="form-note">We use what you send only to reply to you. See our <a href="/privacy">Privacy Policy</a>.</p>
     </form>

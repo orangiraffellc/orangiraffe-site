@@ -1,7 +1,8 @@
 # orangiraffe.com
 
 Company website for Orangiraffe LLC. Plain static HTML and CSS: no build step,
-no JavaScript, no cookies, no analytics, no external resources.
+no cookies, no analytics, no external resources. The only JavaScript is our own
+small files for the contact form's spam check and the inbox.
 
 ## Layout
 
@@ -18,6 +19,7 @@ public/                  what the site serves
   assets/dromotelo.png   Dromotelo app icon
   thanks.html, contact-error.html   where the contact form redirects
   assets/inbox.js        inbox conveniences (select all, local times, confirm)
+  assets/contact.js      contact form spam check (proof of work, link warning)
   favicon.png, apple-touch-icon.png, robots.txt, sitemap.xml
 form/contact.py          contact form + private inbox (Python stdlib only, SQLite)
 nginx.conf               clean URLs, 404 page, forwards /api/contact and /inbox to the form
@@ -71,15 +73,38 @@ soon as the hook checks out the new commit.
 
 `form/contact.py` (Python stdlib only, container `orangiraffe-form`):
 
-- `POST /api/contact`: plain HTML form, no JavaScript. Saves the message to
+- `POST /api/contact`: the home page form. Saves the message to
   SQLite at `/opt/orangiraffe/data/messages.db`, then redirects to `/thanks`
   or `/contact-error`. No email service is involved.
 - `https://orangiraffe.com/inbox`: private list of messages behind HTTP Basic
   auth, with select all, delete selected and delete all. Each sender's email
   is a mailto link for replying.
 
-Spam control: a hidden honeypot field, 5 submissions per IP per hour, 100 per
-day overall, and at most 5000 stored messages. IP addresses are never stored.
+Spam control, all on our own server (no CAPTCHA service, nothing third party):
+
+- 5 submissions per IP per hour.
+- A hidden honeypot field.
+- Proof of work: while the visitor fills in the form, `assets/contact.js` has
+  the browser find a nonce so that SHA-256 of `orangiraffe-contact:<salt>:<nonce>`
+  starts with 16 zero bits (about a second). The server checks it and refuses
+  a salt it has seen before (table `pow_used`, kept 30 days). Scripts that post
+  the form without running the page fail here.
+- At least 3 seconds between opening the page and sending.
+- No links (`http`, `www.`, HTML/BBCode links, or a domain followed by a path).
+  The page tells people to remove them; the server drops any that get past.
+- 100 accepted messages per day overall (blocked ones do not count), and at
+  most 5000 stored.
+
+Anything that fails a spam check is dropped while the sender is shown the
+normal "sent" page, so bots learn nothing. The exception is a post with no
+proof-of-work fields at all, which gets the error page ("reload and try
+again"), in case it is a person on a cached copy of the old page. The inbox shows how many were
+blocked since the form service last started. The form needs JavaScript; a
+`<noscript>` note says so. Bots that drive a full browser can still pass; if
+that becomes a problem, the next step is Cloudflare Turnstile, which would
+need a CSP change in the Caddy block and a privacy policy update.
+
+IP addresses are never stored.
 Ten failed inbox sign-ins from one IP lock it out for 15 minutes.
 
 Set or change the inbox username and password, as root on the VPS:

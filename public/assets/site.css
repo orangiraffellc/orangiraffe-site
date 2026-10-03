@@ -118,6 +118,9 @@ h3 { font-size: 19px; margin: 32px 0 8px; }
 .field input:focus-visible, .field textarea:focus-visible { outline: 3px solid var(--orange); outline-offset: 1px; }
 .contact-form .button { border: 0; font: inherit; font-weight: 700; cursor: pointer; }
 .form-note { color: var(--muted); font-size: 15px; margin: 16px 0 0; }
+.form-error { margin: 0 0 16px; padding: 10px 14px; border-left: 4px solid var(--orange); background: var(--bg); color: var(--text); font-weight: 600; }
+.form-error[hidden] { display: none; }
+.contact-form .button:disabled { opacity: 0.6; cursor: wait; }
 /* Honeypot: off-screen for people, still in the form for bots. */
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
