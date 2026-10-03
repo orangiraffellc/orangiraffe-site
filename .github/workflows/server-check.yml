@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      SITES: "https://dromotelo.com https://orangiraffe.com"
+      SITES: "https://dromotelo.com https://orangiraffe.com https://orangiraffe.com/pickwar-privacy"
       STATUS_URL: https://orangiraffe.com/status.txt
       DISK_MAX_PCT: "80"
       MEM_MAX_PCT: "90"

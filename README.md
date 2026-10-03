@@ -10,6 +10,7 @@ public/                  what the site serves
   index.html             home: company, apps, contact
   privacy.html           privacy policy for this website (apps link out)
   legal.html             company details and website terms
+  pickwar-privacy.html   PickWar app privacy policy (URL is in the Play Console: never move it)
   404.html
   assets/site.css        all styles, light and dark mode
   assets/logo.png        horizontal logo (header), from the original Illustrator artwork
@@ -133,7 +134,8 @@ writes `https://orangiraffe.com/status.txt` (disk %, memory %, load, time of
 the last GitHub fetch). Every hour the GitHub workflow **Server check** reads
 it and fails when:
 
-- dromotelo.com or orangiraffe.com does not return 200,
+- dromotelo.com, orangiraffe.com or orangiraffe.com/pickwar-privacy does not
+  return 200,
 - disk is 80% full or more, or memory 90% used or more,
 - status.txt is over 20 minutes old (the server's cron, and auto-deploy, stopped),
 - the server has not reached GitHub for an hour (pushes are not deploying).
