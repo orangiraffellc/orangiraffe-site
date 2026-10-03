@@ -13,7 +13,8 @@
 <meta property="og:description" content="A Texas software company. Makers of Dromotelo.">
 <meta property="og:url" content="https://orangiraffe.com/">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v=2">
+<script src="/assets/nav.js?v=1" defer></script>
 <script src="/assets/contact.js?v=1" defer></script>
 </head>
 <body>
@@ -23,7 +24,10 @@
     <a class="brand" href="/">
       <img src="/assets/logo.png" alt="Orangiraffe" width="219" height="44">
     </a>
-    <nav class="site-nav" aria-label="Main">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu" hidden>
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main">
       <ul>
         <li><a href="/" aria-current="page">Home</a></li>
         <li><a href="/#apps">Apps</a></li>

@@ -9,7 +9,8 @@
 <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#FFFFFF">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v=2">
+<script src="/assets/nav.js?v=1" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -18,7 +19,10 @@
     <a class="brand" href="/">
       <img src="/assets/logo.png" alt="Orangiraffe" width="219" height="44">
     </a>
-    <nav class="site-nav" aria-label="Main">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu" hidden>
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Main">
       <ul>
         <li><a href="/">Home</a></li>
         <li><a href="/#apps">Apps</a></li>

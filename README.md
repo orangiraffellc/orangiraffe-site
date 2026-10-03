@@ -20,6 +20,7 @@ public/                  what the site serves
   thanks.html, contact-error.html   where the contact form redirects
   assets/inbox.js        inbox conveniences (select all, local times, confirm)
   assets/contact.js      contact form spam check (proof of work, link warning)
+  assets/nav.js          phone menu button (links show as a row without JavaScript)
   favicon.png, apple-touch-icon.png, robots.txt, sitemap.xml
 form/contact.py          contact form + private inbox (Python stdlib only, SQLite)
 nginx.conf               clean URLs, 404 page, forwards /api/contact and /inbox to the form
@@ -35,6 +36,11 @@ deploy/health-status.sh  cron (via pull-deploy): writes public/status.txt for th
 
 The site deliberately shows no address, phone or email. People reach the
 company through the contact form.
+
+Caching: nginx tells browsers to keep `/assets/` for 7 days. Every page links
+CSS and JS with a version (`site.css?v=2`, `nav.js?v=1`, `contact.js?v=1`);
+bump it in every page (and in `form/contact.py` for site.css) whenever that
+file changes, or visitors keep the old copy for up to a week.
 
 Copy rules: no em dashes or en dashes (plain hyphens only), no emojis, and do not
 claim Play Store availability or integrations that are not live.

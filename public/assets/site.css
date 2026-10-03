@@ -61,8 +61,9 @@ a:hover { text-decoration-thickness: 3px; }
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 8px 24px; padding-top: 14px; padding-bottom: 14px;
 }
-.brand { display: flex; align-items: center; text-decoration: none; }
-.brand img { height: 44px; width: auto; }
+.brand { display: flex; align-items: center; text-decoration: none; flex: 0 0 auto; }
+/* Never let flexbox squeeze the logo: fixed height, natural width. */
+.brand img { height: 44px; width: auto; max-width: none; }
 .site-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .site-nav a { color: #231F20; text-decoration: none; font-weight: 600; font-size: 15px; padding: 6px 0; display: inline-block; }
 .site-nav a:hover { color: #4D4D4F; }
@@ -136,9 +137,34 @@ h3 { font-size: 19px; margin: 32px 0 8px; }
 .site-footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; }
 .site-footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .site-footer p { margin: 0; }
+/* Phone menu: nav.js adds .has-nav-toggle and shows the button; without
+   JavaScript the links simply wrap under the logo. */
+.nav-toggle { display: none; }
+@media (max-width: 640px) {
+  .brand img { height: 38px; }
+  .has-nav-toggle .site-header .wrap { flex-wrap: wrap; row-gap: 0; }
+  .has-nav-toggle .nav-toggle {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 44px; height: 44px; padding: 0 11px; margin-left: auto;
+    background: #FFFFFF; border: 1px solid #DCDDDE; border-radius: 10px; cursor: pointer;
+  }
+  .nav-toggle span { display: block; height: 2px; background: #231F20; border-radius: 1px; transition: transform 0.2s, opacity 0.2s; }
+  .nav-open .nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-open .nav-toggle span:nth-child(2) { opacity: 0; }
+  .nav-open .nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .has-nav-toggle .site-nav { display: none; flex-basis: 100%; }
+  .has-nav-toggle .nav-open .site-nav { display: block; }
+  .has-nav-toggle .site-nav ul { flex-direction: column; gap: 0; padding-top: 8px; }
+  .has-nav-toggle .site-nav li + li { border-top: 1px solid #DCDDDE; }
+  .has-nav-toggle .site-nav a { display: block; padding: 12px 0; font-size: 17px; }
+  .has-nav-toggle .site-nav a[aria-current="page"] { text-underline-offset: 4px; }
+}
 @media (max-width: 400px) {
   .site-nav ul { gap: 4px 14px; }
   .site-nav a { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-toggle span { transition: none; }
 }
 
 /* Private inbox (/inbox) */
