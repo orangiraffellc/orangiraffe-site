@@ -40,7 +40,7 @@ The site deliberately shows no address, phone or email. People reach the
 company through the contact form.
 
 Caching: nginx tells browsers to keep `/assets/` for 7 days. Every page links
-CSS and JS with a version (`site.css?v=3`, `nav.js?v=1`, `contact.js?v=1`);
+CSS and JS with a version (`site.css?v=4`, `nav.js?v=1`, `contact.js?v=1`);
 bump it in every page (and in `form/contact.py` for site.css) whenever that
 file changes, or visitors keep the old copy for up to a week.
 

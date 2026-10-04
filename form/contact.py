@@ -242,7 +242,7 @@ def inbox_page(rows, total):
 <meta name="robots" content="noindex, nofollow">
 <title>Inbox | Orangiraffe LLC</title>
 <link rel="icon" href="/favicon.png" type="image/png">
-<link rel="stylesheet" href="/assets/site.css?v=3">
+<link rel="stylesheet" href="/assets/site.css?v=4">
 <script src="/assets/inbox.js" defer></script>
 </head>
 <body>
@@ -271,7 +271,7 @@ def simple_page(title, text):
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
         f'<meta name="robots" content="noindex"><title>{html.escape(title)}</title>'
-        '<link rel="stylesheet" href="/assets/site.css?v=3"></head><body><main><div class="wrap doc">'
+        '<link rel="stylesheet" href="/assets/site.css?v=4"></head><body><main><div class="wrap doc">'
         f"<h1>{html.escape(title)}</h1><p>{html.escape(text)}</p></div></main></body></html>"
     )
 

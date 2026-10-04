@@ -93,6 +93,11 @@ h3 { font-size: 19px; margin: 32px 0 8px; }
 }
 .card img { width: 72px; height: 72px; border-radius: 16px; }
 .card + .card { margin-top: 16px; }
+/* App cards: dark gray in every mode, white text, orange links. */
+.card { background: #4D4D4F; border-color: #4D4D4F; color: #FFFFFF; }
+.card .note { color: #DCDDDE; }
+.card a:not(.button) { color: #F7941E; }
+.card .button:hover { background: #FFFFFF; color: #231F20; }
 .card .note + .note { margin-top: -4px; }
 .card h3 { margin: 0 0 6px; font-size: 22px; }
 .card p { margin: 0 0 12px; }
