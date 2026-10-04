@@ -18,6 +18,7 @@ public/                  what the site serves
   assets/mark.png        round icon (hero), from the original icon PNG
   assets/dromotelo.png   Dromotelo app icon
   assets/pickwar.png     PickWar app icon (256 px, from the owner)
+  assets/hodolog.png     Hodolog app icon (256 px, rendered from app/icon.svg in orangiraffellc/travel)
   thanks.html, contact-error.html   where the contact form redirects
   assets/inbox.js        inbox conveniences (select all, local times, confirm)
   assets/contact.js      contact form spam check (proof of work, link warning)
