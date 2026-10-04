@@ -92,6 +92,8 @@ h3 { font-size: 19px; margin: 32px 0 8px; }
   padding: 24px; display: grid; grid-template-columns: 72px 1fr; gap: 20px; align-items: start;
 }
 .card img { width: 72px; height: 72px; border-radius: 16px; }
+.card + .card { margin-top: 16px; }
+.card .note + .note { margin-top: -4px; }
 .card h3 { margin: 0 0 6px; font-size: 22px; }
 .card p { margin: 0 0 12px; }
 .card .note { color: var(--muted); font-size: 15px; }

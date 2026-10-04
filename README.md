@@ -17,6 +17,7 @@ public/                  what the site serves
   assets/logo.png        horizontal logo (header), from the original Illustrator artwork
   assets/mark.png        round icon (hero), from the original icon PNG
   assets/dromotelo.png   Dromotelo app icon
+  assets/pickwar.png     PickWar app icon (256 px, from the owner)
   thanks.html, contact-error.html   where the contact form redirects
   assets/inbox.js        inbox conveniences (select all, local times, confirm)
   assets/contact.js      contact form spam check (proof of work, link warning)
@@ -38,7 +39,7 @@ The site deliberately shows no address, phone or email. People reach the
 company through the contact form.
 
 Caching: nginx tells browsers to keep `/assets/` for 7 days. Every page links
-CSS and JS with a version (`site.css?v=2`, `nav.js?v=1`, `contact.js?v=1`);
+CSS and JS with a version (`site.css?v=3`, `nav.js?v=1`, `contact.js?v=1`);
 bump it in every page (and in `form/contact.py` for site.css) whenever that
 file changes, or visitors keep the old copy for up to a week.
 
